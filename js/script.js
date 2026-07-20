@@ -1,5 +1,4 @@
 const actions = [...document.querySelectorAll('.action-card')];
-const selectionMessage = document.querySelector('#selection-message');
 
 function moveFocus(currentIndex, direction) {
   const nextIndex = (currentIndex + direction + actions.length) % actions.length;
@@ -24,7 +23,7 @@ document.addEventListener('keydown', (event) => {
 
 actions.forEach((action) => {
   action.addEventListener('click', () => {
-    selectionMessage.textContent = `${action.getAttribute('aria-label')} selected.`;
+    window.location.href = action.dataset.url;
   });
 });
 
