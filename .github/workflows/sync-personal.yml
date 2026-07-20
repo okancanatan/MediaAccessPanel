@@ -1,0 +1,58 @@
+name: Sync personal panel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Check out personal panel
+        uses: actions/checkout@v4
+        with:
+          repository: okancanatan/mediaacceesspanelpersonal
+          ssh-key: ${{ secrets.PERSONAL_PANEL_SYNC_KEY }}
+          persist-credentials: false
+          path: personal
+
+      - name: Sync and personalise
+        run: |
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            source/ personal/
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          page = Path('personal/index.html')
+          text = page.read_text()
+          text = text.replace('class="action-card disney" type="button" aria-label="Disney Plus" data-url="https://www.disneyplus.com/"', 'class="action-card cineby" type="button" aria-label="Cineby" data-url="https://cineby.app/"')
+          text = text.replace('src="media/disney.svg"', 'src="media/cineby.svg"')
+          page.write_text(text)
+
+          Path('personal/media/cineby.svg').write_text('''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" role="img" aria-label="Cineby"><rect width="640" height="180" rx="26" fill="#111"/><text x="320" y="116" fill="#fff" font-family="Arial, sans-serif" font-size="94" font-weight="700" text-anchor="middle" letter-spacing="8">CINEBY</text></svg>''')
+          Path('personal/media/disney.svg').unlink(missing_ok=True)
+          PY
+
+      - name: Commit and push changes
+        working-directory: personal
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Sync MediaAccessPanel personal variant"
+          git push origin HEAD:main
