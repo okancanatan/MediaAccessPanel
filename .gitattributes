@@ -1,0 +1,2 @@
+# Track large media with Git LFS after installing Git LFS (`git lfs install`).
+media/*.{psd,ai,mp4,mov,webm,mp3,wav,flac} filter=lfs diff=lfs merge=lfs -text
